@@ -1,6 +1,10 @@
 const express = require("express");
 const request = require("request");
 const bodyParser = require("body-parser");
+const hash = require("pbkdf2-password");
+const path = require("path");
+const session = require("express-session");
+const db = require("./db/db");
 
 app = express();
 const httpPort = 8080;
@@ -10,8 +14,30 @@ app.use(express.static("public/img"));
 app.set("view engine", "ejs");
 app.use(bodyParser.urlencoded({extended:true}));
 app.use(bodyParser.json());
+app.use(session({
+  resave: false, // don't save session if unmodified
+  saveUninitialized: false, // don't create session until something stored
+  secret: 'shhhh, very secret'
+}));
 
+app.use(function(req, res, next){
+    var err = req.session.error;
+    var msg = req.session.success;
+    delete req.session.error;
+    delete req.session.success;
+    res.locals.message = '';
+    if (err) res.locals.message = '<p class="msg error">' + err + '</p>';
+    if (msg) res.locals.message = '<p class="msg success">' + msg + '</p>';
+    next();
+  });
 
+  hash({ password:  }, function (err, pass, salt, hash) {
+    if (err) throw err;
+    // store the salt & hash in the "db"
+    users.tj.salt = salt;
+    users.tj.hash = hash;
+  });
+  
 
 //App GET ROUTES
 app.get('/', function(req, res){
